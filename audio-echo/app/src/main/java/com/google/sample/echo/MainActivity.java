@@ -64,7 +64,9 @@ public class MainActivity extends Activity
         delayBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                delay_factor=i+1;
+                delay_factor=10*i;
+                if (delay_factor==0)
+                    delay_factor=1;
                 change_delay(delay_factor);
             }
 
@@ -152,14 +154,14 @@ public class MainActivity extends Activity
                 R.string.StopEcho: R.string.StartEcho));
     }
     private void startEcho() {
-       mThread = new Thread(new Runnable() {
+      /* mThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 startEchoThread();
             }
         });
-        mThread.start();
-    //    startEchoThread();
+        mThread.start();*/
+      startEchoThread();
 
     }
     void change_delay(int delay_factor)

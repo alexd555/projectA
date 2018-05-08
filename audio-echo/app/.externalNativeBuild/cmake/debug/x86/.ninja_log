@@ -1,8 +1,0 @@
-# ninja log v5
-486	26926	0	CMakeFiles/echo.dir/audio_main.cpp.o	15391738fe7eb3e5
-88	26996	0	CMakeFiles/echo.dir/audio_filter_function.cpp.o	c5d9aafd98f7415a
-92	26998	0	CMakeFiles/echo.dir/audio_common.cpp.o	8c3c64bb09541989
-89	27000	0	CMakeFiles/echo.dir/debug_utils.cpp.o	f8175fe2bfe91526
-1	27001	0	CMakeFiles/echo.dir/audio_player.cpp.o	fb92499772c85a63
-490	27004	0	CMakeFiles/echo.dir/audio_recorder.cpp.o	7b430d2eea3be66c
-27004	28202	0	D:/OneDrive/OneDrive - Technion/projectA/new_echo_filter/android-ndk/audio-echo/app/build/intermediates/cmake/debug/obj/x86/libecho.so	d886b3e3c17abb7e

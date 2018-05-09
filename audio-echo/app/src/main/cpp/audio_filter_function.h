@@ -22,7 +22,7 @@
  *  real filter function implementation.
  */
 void FilterFunc_FilterFrame(sample_buf *dataBuf);
-bool FilterFunc_Init(void *buf);
+bool FilterFunc_Init(void *buf, uint32_t size);
 void* FilterFunc_Fini(void);
 
 #endif // AUDIO_ECHO_HPF_FILTER_H

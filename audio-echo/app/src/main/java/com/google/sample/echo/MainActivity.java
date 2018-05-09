@@ -45,12 +45,13 @@ public class MainActivity extends Activity
     String  nativeSampleRate;
     String  nativeSampleBufSize;
     String nativeSampleBufSize_base;
-    boolean supportRecording;
+    boolean supportRecording = false;
     Boolean isPlaying = false;
     boolean filterOn = false;
     int delay_factor=1;
-    Thread mThread=null;
-
+    Thread mStartThread=null;
+    Thread mStopThread = null;
+    SeekBar seekBar =  null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,9 +59,8 @@ public class MainActivity extends Activity
         controlButton = (Button)findViewById((R.id.capture_control_button));
         statusView = (TextView)findViewById(R.id.statusView);
         toggleFilter = (Button)findViewById((R.id.toggle_filter_button));
-        queryNativeAudioParameters();
-        updateNativeAudioUI();
         final SeekBar delayBar = (SeekBar)findViewById(R.id.delay_factor);
+        seekBar = delayBar;
         delayBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -79,16 +79,15 @@ public class MainActivity extends Activity
             }
         });
         // initialize native audio system
-
-      /* if (supportRecording) {
-            createSLEngine(Integer.parseInt(nativeSampleRate), Integer.parseInt(nativeSampleBufSize));
-        }*/
+        queryNativeAudioParameters();
+        updateNativeAudioUI();
     }
     @Override
     protected void onDestroy() {
         if (supportRecording) {
             if (isPlaying)
             {
+                enableFilter(false);
                 stopPlay();
                 updateNativeAudioUI();
                 deleteAudioRecorder();
@@ -123,12 +122,10 @@ public class MainActivity extends Activity
     }
     private void startEchoThread()
     {
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-        if(!supportRecording){
-            return;
-        }
+        // android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
         if (!isPlaying) {
             createSLEngine(Integer.parseInt(nativeSampleRate), delay_factor * Integer.parseInt(nativeSampleBufSize));
+            enableFilter(filterOn);
             if(!createSLBufferQueueAudioPlayer()) {
                 updateStatusUI(getString(R.string.error_player));
                 return;
@@ -141,11 +138,12 @@ public class MainActivity extends Activity
             startPlay();   // this must include startRecording()
             updateStatusUI(getString(R.string.status_echoing));
         } else {
-            stopPlay();  //this must include stopRecording()
-            updateNativeAudioUI();
+            enableFilter(false);
+            stopPlay();
             deleteAudioRecorder();
             deleteSLBufferQueueAudioPlayer();
             deleteSLEngine();
+            updateNativeAudioUI();
         }
         isPlaying = !isPlaying;
         runOnUiThread(new Runnable() {
@@ -156,26 +154,59 @@ public class MainActivity extends Activity
             }
         });
     }
+    private void restartEcho() {
+
+        // disabling UI...
+        enableUI(false);
+        // Stopping it first
+        enableFilter(false);
+        stopPlay();
+        updateNativeAudioUI();
+        deleteAudioRecorder();
+        deleteSLBufferQueueAudioPlayer();
+        deleteSLEngine();
+
+        // Starting...
+        createSLEngine(Integer.parseInt(nativeSampleRate), delay_factor * Integer.parseInt(nativeSampleBufSize));
+        enableFilter(filterOn);
+        if(!createSLBufferQueueAudioPlayer()) {
+            updateStatusUI(getString(R.string.error_player));
+            return;
+        }
+        if(!createAudioRecorder()) {
+            deleteSLBufferQueueAudioPlayer();
+            updateStatusUI(getString(R.string.error_recorder));
+            return;
+        }
+        startPlay();   // this must include startRecording()
+
+        // Enabling UI ...
+        enableUI(true);
+    }
+
     private void startEcho() {
-       mThread = new Thread(new Runnable() {
+        mStartThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 startEchoThread();
             }
         });
-        mThread.start();
-    //    startEchoThread();
-
+        mStartThread.start();
     }
     void change_delay(int delay_factor)
     {
-        if(!supportRecording) {
+        if(!isPlaying) {
             return;
         }
-        if(isPlaying) {
-            startEcho();
-            startEcho();
-        }
+
+        // we are in eching, re-start it
+        mStartThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                restartEcho();
+            }
+        });
+        mStartThread.start();
     }
 
     public void onEchoClick(View view) {
@@ -222,17 +253,28 @@ public class MainActivity extends Activity
         }
     }
     private void updateNativeAudioUI() {
+        if (!supportRecording) {
+            statusView.setText(getString(R.string.error_no_mic));
+            controlButton.setEnabled(false);
+            seekBar.setEnabled(false);
+            return;
+        }
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (!supportRecording) {
-                    statusView.setText(getString(R.string.error_no_mic));
-                    controlButton.setEnabled(false);
-                    return;
-                }
-
                 statusView.setText("nativeSampleRate    = " + nativeSampleRate + "\n" +
                         "nativeSampleBufSize = " + delay_factor * Integer.parseInt(nativeSampleBufSize) + "\n");
+            }
+        });
+    }
+
+    private void enableUI(final boolean enable) {
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                controlButton.setEnabled(enable);
+                seekBar.setEnabled(enable);
             }
         });
     }

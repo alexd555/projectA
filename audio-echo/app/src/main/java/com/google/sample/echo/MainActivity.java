@@ -130,16 +130,16 @@ public class MainActivity extends Activity
         if (!isPlaying) {
             createSLEngine(Integer.parseInt(nativeSampleRate), delay_factor * Integer.parseInt(nativeSampleBufSize));
             if(!createSLBufferQueueAudioPlayer()) {
-                statusView.setText(getString(R.string.error_player));
+                updateStatusUI(getString(R.string.error_player));
                 return;
             }
             if(!createAudioRecorder()) {
                 deleteSLBufferQueueAudioPlayer();
-                statusView.setText(getString(R.string.error_recorder));
+                updateStatusUI(getString(R.string.error_recorder));
                 return;
             }
             startPlay();   // this must include startRecording()
-            statusView.setText(getString(R.string.status_echoing));
+            updateStatusUI(getString(R.string.status_echoing));
         } else {
             stopPlay();  //this must include stopRecording()
             updateNativeAudioUI();
@@ -148,8 +148,13 @@ public class MainActivity extends Activity
             deleteSLEngine();
         }
         isPlaying = !isPlaying;
-        controlButton.setText(getString((isPlaying == true) ?
-                R.string.StopEcho: R.string.StartEcho));
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                controlButton.setText(getString((isPlaying == true) ?
+                        R.string.StopEcho: R.string.StartEcho));
+            }
+        });
     }
     private void startEcho() {
        mThread = new Thread(new Runnable() {
@@ -217,14 +222,29 @@ public class MainActivity extends Activity
         }
     }
     private void updateNativeAudioUI() {
-        if (!supportRecording) {
-            statusView.setText(getString(R.string.error_no_mic));
-            controlButton.setEnabled(false);
-            return;
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!supportRecording) {
+                    statusView.setText(getString(R.string.error_no_mic));
+                    controlButton.setEnabled(false);
+                    return;
+                }
 
-        statusView.setText("nativeSampleRate    = " + nativeSampleRate + "\n" +
-                "nativeSampleBufSize = " + delay_factor * Integer.parseInt(nativeSampleBufSize) + "\n");
+                statusView.setText("nativeSampleRate    = " + nativeSampleRate + "\n" +
+                        "nativeSampleBufSize = " + delay_factor * Integer.parseInt(nativeSampleBufSize) + "\n");
+            }
+        });
+    }
+
+    private void updateStatusUI(String msg) {
+        final String nextStatus = msg;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                statusView.setText(nextStatus);
+            }
+        });
 
     }
     @Override

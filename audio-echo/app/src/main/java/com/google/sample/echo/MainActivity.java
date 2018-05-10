@@ -64,7 +64,9 @@ public class MainActivity extends Activity
         delayBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                delay_factor=i+1;
+                delay_factor=i*10;
+                if (i==0)
+                    delay_factor=1;
                 change_delay(delay_factor);
             }
 
@@ -85,16 +87,17 @@ public class MainActivity extends Activity
     @Override
     protected void onDestroy() {
         if (supportRecording) {
-            if (isPlaying)
-            {
-                enableFilter(false);
+            if (isPlaying) {
+                if (filterOn) {
+                    enableFilter(false);
+                }
                 stopPlay();
                 updateNativeAudioUI();
                 deleteAudioRecorder();
                 deleteSLBufferQueueAudioPlayer();
+                deleteSLEngine();
+                isPlaying = false;
             }
-            deleteSLEngine();
-            isPlaying = false;
         }
         super.onDestroy();
     }

@@ -47,8 +47,8 @@
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="176dp"
-        android:max="99"
-        android:progress="1" />
+        android:max="10"
+        android:progress="0" />
 
     <EditText
         android:id="@+id/editText"

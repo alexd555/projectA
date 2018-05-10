@@ -164,6 +164,7 @@ __inline__ void releaseSampleBufs(sample_buf* bufs, uint32_t& count) {
         return;
     }
     for(uint32_t i=0; i<count; i++) {
+        // LOGW("====INFO memory releasing: addr = %p, idx: %d",bufs[i].buf_, i);
         if(bufs[i].buf_) delete [] bufs[i].buf_;
     }
     delete [] bufs;
@@ -180,6 +181,7 @@ __inline__ sample_buf *allocateSampleBufs(uint32_t count, uint32_t sizeInByte){
     uint32_t i ;
     for(i =0; i < count; i++) {
         bufs[i].buf_ = new uint8_t [allocSize];
+        // LOGW("====INFO memory allocation: addr = %p, idx: %d",bufs[i].buf_, i);
         if(bufs[i].buf_ == nullptr) {
             LOGW("====Requesting %d buffers, allocated %d in %s",count, i,  __FUNCTION__);
             break;

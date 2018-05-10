@@ -107,7 +107,7 @@ Java_com_google_sample_echo_MainActivity_createSLEngine(
 
     engine.freeBufQueue_ = new AudioQueue (engine.bufCount_);
     engine.recBufQueue_  = new AudioQueue (engine.bufCount_);
-    FilterFunc_Init(engine.bufs_[0].buf_);
+    FilterFunc_Init(engine.bufs_[0].buf_, engine.bufs_[0].cap_);
     assert(engine.freeBufQueue_ && engine.recBufQueue_);
     for(uint32_t i=1; i<engine.bufCount_; i++) {
         engine.freeBufQueue_->push(&engine.bufs_[i]);
@@ -201,7 +201,7 @@ JNIEXPORT void JNICALL
 Java_com_google_sample_echo_MainActivity_deleteSLEngine(JNIEnv *env, jclass type) {
     delete engine.recBufQueue_;
     delete engine.freeBufQueue_;
-    FilterFunc_Fini();
+    engine.bufs_[0].buf_ = static_cast<uint8_t *>(FilterFunc_Fini());
     releaseSampleBufs(engine.bufs_, engine.bufCount_);
     if (engine.slEngineObj_ != NULL) {
         (*engine.slEngineObj_)->Destroy(engine.slEngineObj_);

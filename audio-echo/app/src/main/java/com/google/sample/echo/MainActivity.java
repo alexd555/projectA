@@ -49,8 +49,7 @@ public class MainActivity extends Activity
     Boolean isPlaying = false;
     boolean filterOn = false;
     int delay_factor=1;
-    Thread mStartThread=null;
-    Thread mStopThread = null;
+    Thread mThread=null;
     SeekBar seekBar =  null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +64,18 @@ public class MainActivity extends Activity
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 delay_factor=i+1;
-                change_delay(delay_factor);
+                if(!isPlaying) {
+                    return;
+                }
+
+                // we are in echoing, re-start it
+                mThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        restartEcho();
+                    }
+                });
+                mThread.start();
             }
 
             @Override
@@ -93,7 +103,6 @@ public class MainActivity extends Activity
                 deleteAudioRecorder();
                 deleteSLBufferQueueAudioPlayer();
             }
-            deleteSLEngine();
             isPlaying = false;
         }
         super.onDestroy();
@@ -122,7 +131,6 @@ public class MainActivity extends Activity
     }
     private void startEchoThread()
     {
-        // android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
         if (!isPlaying) {
             createSLEngine(Integer.parseInt(nativeSampleRate), delay_factor * Integer.parseInt(nativeSampleBufSize));
             enableFilter(filterOn);
@@ -153,9 +161,9 @@ public class MainActivity extends Activity
                         R.string.StopEcho: R.string.StartEcho));
             }
         });
+        enableUI(true);
     }
     private void restartEcho() {
-
         // disabling UI...
         enableUI(false);
         // Stopping it first
@@ -178,35 +186,20 @@ public class MainActivity extends Activity
             updateStatusUI(getString(R.string.error_recorder));
             return;
         }
-        startPlay();   // this must include startRecording()
+        startPlay();
 
         // Enabling UI ...
         enableUI(true);
     }
 
     private void startEcho() {
-        mStartThread = new Thread(new Runnable() {
+        mThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 startEchoThread();
             }
         });
-        mStartThread.start();
-    }
-    void change_delay(int delay_factor)
-    {
-        if(!isPlaying) {
-            return;
-        }
-
-        // we are in eching, re-start it
-        mStartThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                restartEcho();
-            }
-        });
-        mStartThread.start();
+        mThread.start();
     }
 
     public void onEchoClick(View view) {
@@ -219,6 +212,7 @@ public class MainActivity extends Activity
                     AUDIO_ECHO_REQUEST);
             return;
         }
+        enableUI(false);
         startEcho();
     }
 
@@ -262,8 +256,8 @@ public class MainActivity extends Activity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                statusView.setText("nativeSampleRate    = " + nativeSampleRate + "\n" +
-                        "nativeSampleBufSize = " + delay_factor * Integer.parseInt(nativeSampleBufSize) + "\n");
+            statusView.setText("nativeSampleRate    = " + nativeSampleRate + "\n" +
+                   "nativeSampleBufSize = " + delay_factor * Integer.parseInt(nativeSampleBufSize) + "\n");
             }
         });
     }
